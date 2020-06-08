@@ -29,7 +29,7 @@ def writeFile(output):
             file : file output.json containing the rental prices
     """
     try:
-        with open("../out/lv_1_output.json", 'w', encoding='utf-8') as f_out:
+        with open("../out/lv_2_output.json", 'w', encoding='utf-8') as f_out:
             json.dump(output, f_out, indent=2)
     finally:
         f_out.close
@@ -103,7 +103,10 @@ def getRentals(data):
 
 def calculPrice(rental, car):
     """ Calcul the price of each rental
-        Lv1 : price = sum ( rental_days * price_per_date, disctance * price_per_distance)
+        Lv2 : Having a decreasing pricing for longer rentals
+            - price per day decreases by 10% after 1 day
+            - price per day decreases by 30% after 4 days
+            - price per day decreases by 50% after 10 days
      
         Parameters: 
             rental (Rental): Class Rental's object contaning information about the rental
@@ -113,5 +116,16 @@ def calculPrice(rental, car):
             int: Rental price in cents 
     """
     days = (rental.end_date - rental.start_date).days + 1
+    days_price = 0
 
-    return days * car.price_per_day + rental.distance * car.price_per_km
+    for d in range(days):
+        if d >= 10:
+            days_price += car.price_per_day * 0.5
+        elif d >= 4:
+            days_price += car.price_per_day * 0.7
+        elif d >= 1:
+            days_price += car.price_per_day * 0.9
+        else:
+            days_price += car.price_per_day
+
+    return int(days_price) + rental.distance * car.price_per_km

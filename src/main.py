@@ -3,7 +3,7 @@ from service_functions import readFile, getCars, getRentals, calculPrice, writeF
 
 def main():
     # Get data from JSON file
-    data = readFile("../data/lv_1_input.json")
+    data = readFile("../data/lv_2_input.json")
 
     # Extrait data
     listCars = {}
