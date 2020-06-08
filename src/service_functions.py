@@ -1,6 +1,6 @@
 import json
 import datetime
-from model import Car, Rental
+from model import Car, Rental, Option
 
 
 def readFile(path):
@@ -29,7 +29,7 @@ def writeFile(output):
             file : file output.json containing the rental prices
     """
     try:
-        with open("../out/lv_4_output.json", 'w', encoding='utf-8') as f_out:
+        with open("../out/lv_5_output.json", 'w', encoding='utf-8') as f_out:
             json.dump(output, f_out, indent=2)
     finally:
         f_out.close
@@ -99,7 +99,37 @@ def getRentals(data):
     return listRentals
 
 
-def calculPrice(rental, car):
+def getOptions(data):
+    """Get information about sold options
+
+        Parameters: 
+            data (Dict[str, str]) : Dictionary of information about cars and rentals
+
+        Return:
+            Dict[int, Option] : Dictionary of options orders by option's ID
+    """
+    listOptions = {}
+
+    for opt in data["options"]:
+        if (opt['id'] is None or
+            opt['rental_id'] is None or
+                opt['type'] is None):
+            print("Options : Unfound info \n")
+            return
+        else:
+            if (type(opt['id']) != int or
+                type(opt['rental_id']) != int or
+                    type(opt['type']) != str):
+                print("Options : Invalide type \n")
+                return
+            else:
+                option = Option(opt['id'], opt['rental_id'], opt['type'])
+                listOptions[option.id] = option
+
+    return listOptions
+
+
+def calculPrice(rental, car, listOptions):
     """ Calcul the price of each rental
         The rental price is split :
             - 70% to car owner
@@ -108,13 +138,22 @@ def calculPrice(rental, car):
                 - 1€/day goes to the roadside assistance
                 - the rest goes to company
 
+        Lv 5 : Drivers can buy additionnal features after their booking
+            - GPS: 5€/day, all the money goes to the owner
+            - Baby Seat: 2€/day, all the money goes to the owner
+            - Additional Insurance: 10€/day, all the money goes to company
+        Price is stored in cents, 1€ = 100 cents
+
         Parameters: 
             rental (Rental): Class Rental's object contaning information about the rental
             car (Car): Class Car's object contaning information about the car
+            listOptions (List[Option]): List of Option objects bought in the rental
 
         Return: 
             Dist[str,int]: Details of rental price in cents 
     """
+    option_price_per_day = {"gps": 500,
+                            "baby_seat": 200, "additional_insurance": 1000}
     days = (rental.end_date - rental.start_date).days + 1
     days_price = 0
 
@@ -133,14 +172,23 @@ def calculPrice(rental, car):
     commission = int(price * 0.3)
     rent = price - commission
     insurance_fee = int(commission * 0.5)
-    assistance_fee = days * 100  # price is stored in cents, 1€ = 100 cents
+    assistance_fee = days * 100
     drivy_fee = commission - insurance_fee - assistance_fee
+
+    # addition fee after booking
+    for opt in listOptions:
+        price += option_price_per_day.get(opt) * days
+
+        if opt == "gps" or opt == "baby_seat":
+            rent += option_price_per_day.get(opt) * days
+        else:
+            drivy_fee += option_price_per_day.get(opt) * days
 
     return {"driver": price, "owner": rent, "insurance": insurance_fee, "assistance": assistance_fee, "drivy": drivy_fee}
 
 
 def invoice(price_details):
-    """Lv 4 : Invoice the bill 
+    """Invoice the bill 
         to know how much money must be debited/credited for each actor
 
         Parameter: 
