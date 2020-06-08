@@ -1,9 +1,10 @@
-from service_functions import readFile, getCars, getRentals, calculPrice, writeFile
+from service_functions import readFile, getCars, getRentals,\
+    calculPrice, writeFile, invoice
 
 
 def main():
     # Get data from JSON file
-    data = readFile("../data/lv_3_input.json")
+    data = readFile("../data/lv_4_input.json")
 
     # Extrait data
     listCars = {}
@@ -19,8 +20,7 @@ def main():
         rental = listRentals.get(r)
         price_details = calculPrice(rental, listCars.get(rental.car_id))
         bill["id"] = rental.id
-        bill["price"] = price_details.get("price")
-        bill["commission"] = price_details.get("commission")
+        bill["actions"] = invoice(price_details)
         rentals.append(bill)
 
     # write to json file

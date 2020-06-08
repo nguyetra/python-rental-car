@@ -29,7 +29,7 @@ def writeFile(output):
             file : file output.json containing the rental prices
     """
     try:
-        with open("../out/lv_3_output.json", 'w', encoding='utf-8') as f_out:
+        with open("../out/lv_4_output.json", 'w', encoding='utf-8') as f_out:
             json.dump(output, f_out, indent=2)
     finally:
         f_out.close
@@ -101,7 +101,7 @@ def getRentals(data):
 
 def calculPrice(rental, car):
     """ Calcul the price of each rental
-        Lv3 : The rental price is split :
+        The rental price is split :
             - 70% to car owner
             - 30% commission :
                 - half goes to the insurance
@@ -131,11 +131,34 @@ def calculPrice(rental, car):
     # details price booking
     price = int(days_price) + rental.distance * car.price_per_km
     commission = int(price * 0.3)
+    rent = price - commission
     insurance_fee = int(commission * 0.5)
     assistance_fee = days * 100  # price is stored in cents, 1€ = 100 cents
     drivy_fee = commission - insurance_fee - assistance_fee
 
-    commission_str = {"insurance_fee": insurance_fee,
-                      "assistance_fee": assistance_fee, "drivy_fee": drivy_fee}
+    return {"driver": price, "owner": rent, "insurance": insurance_fee, "assistance": assistance_fee, "drivy": drivy_fee}
 
-    return {"price": price, "commission": commission_str}
+
+def invoice(price_details):
+    """Lv 4 : Invoice the bill 
+        to know how much money must be debited/credited for each actor
+
+        Parameter: 
+            price_details (Dist[str,str]): Rental price details in cents         
+
+        Return: 
+            List[Dist[str,str]]: List of actions. Each action contains a person and an amount that he must pay or earn.
+    """
+    actions = []
+
+    for p in price_details:
+        action = {}
+        action["who"] = p
+        if p == "driver":
+            action["type"] = "debit"
+        else:
+            action["type"] = "credit"
+        action["amount"] = price_details.get(p)
+        actions.append(action)
+
+    return actions
