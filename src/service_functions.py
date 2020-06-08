@@ -5,10 +5,10 @@ from model import Car, Rental
 
 def readFile(path):
     """Get data from JSON file
-    
+
         Parameter:
             path (str): path to JSON file
-        
+
         Return:
             Dict[str, str]: Dictionary of information about cars and rentals
     """
@@ -21,24 +21,23 @@ def readFile(path):
 
 def writeFile(output):
     """Write data to JSON file
-    
+
         Parameter:
             output (str) : list of rentals prices and its ID
-        
+
         Return:
             file : file output.json containing the rental prices
     """
     try:
-        with open("../out/lv_2_output.json", 'w', encoding='utf-8') as f_out:
+        with open("../out/lv_3_output.json", 'w', encoding='utf-8') as f_out:
             json.dump(output, f_out, indent=2)
     finally:
         f_out.close
 
 
-
 def getCars(data):
     """Get information about cars
-    
+
         Parameters: 
             data (Dict[str, str]) : Dictionary of information about cars and rentals
 
@@ -64,10 +63,9 @@ def getCars(data):
     return listCars
 
 
-
 def getRentals(data):
     """Get information about rentals
-    
+
         Parameters: 
             data (Dict[str, str]) : Dictionary of information about cars and rentals
 
@@ -103,17 +101,19 @@ def getRentals(data):
 
 def calculPrice(rental, car):
     """ Calcul the price of each rental
-        Lv2 : Having a decreasing pricing for longer rentals
-            - price per day decreases by 10% after 1 day
-            - price per day decreases by 30% after 4 days
-            - price per day decreases by 50% after 10 days
-     
+        Lv3 : The rental price is split :
+            - 70% to car owner
+            - 30% commission :
+                - half goes to the insurance
+                - 1€/day goes to the roadside assistance
+                - the rest goes to company
+
         Parameters: 
             rental (Rental): Class Rental's object contaning information about the rental
             car (Car): Class Car's object contaning information about the car
-  
+
         Return: 
-            int: Rental price in cents 
+            Dist[str,int]: Details of rental price in cents 
     """
     days = (rental.end_date - rental.start_date).days + 1
     days_price = 0
@@ -128,4 +128,14 @@ def calculPrice(rental, car):
         else:
             days_price += car.price_per_day
 
-    return int(days_price) + rental.distance * car.price_per_km
+    # details price booking
+    price = int(days_price) + rental.distance * car.price_per_km
+    commission = int(price * 0.3)
+    insurance_fee = int(commission * 0.5)
+    assistance_fee = days * 100  # price is stored in cents, 1€ = 100 cents
+    drivy_fee = commission - insurance_fee - assistance_fee
+
+    commission_str = {"insurance_fee": insurance_fee,
+                      "assistance_fee": assistance_fee, "drivy_fee": drivy_fee}
+
+    return {"price": price, "commission": commission_str}
